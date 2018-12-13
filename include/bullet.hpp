@@ -78,7 +78,7 @@ void init_ncurses();
 enum MenuState {
 	Month,
 	Day
-} menu;
+} currmenu;
 
 bool monthmenudirty;
 void month_menu_draw();

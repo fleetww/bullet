@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 		int ch = getch();
 		if (ch == 'q') break;
 
-		switch (menu) {
+		switch (currmenu) {
 			case Month:
 				month_menu_update(ch);
 				break;
@@ -45,6 +45,14 @@ char day_of_week(int y, int m, int d) {
 		}
 	}
 	return daystotal % 7;
+}
+
+void init_date() {
+	time_t currentTime_t = time(NULL);
+	struct tm *currentTime = localtime(&currentTime_t);
+	year = currentTime->tm_year + 1900;
+	monthnum = currentTime->tm_mon + 1;
+	daynum = currentTime->tm_mday;
 }
 
 bool file_exists(const std::string& path) {
@@ -117,25 +125,25 @@ void month_menu_draw() {
 	mvwchgat(monthwin, currmonthnum - 1, 0, monthnames[currmonthnum - 1].length(),
 			A_UNDERLINE, 0, NULL);
 	mvwchgat(monthwin, monthcursor, 0, monthnames[monthcursor].length(),
-			(menu == Month) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
+			(currmenu == Month) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
 
 	wrefresh(monthwin);
 }
 
 void month_menu_update(int input) {
 	switch (input) {
-		case KEY_RIGHT:
+		case 'l':
 			if (monthcursor != (currmonthnum - 1)) {
 				monthcursor = currmonthnum - 1;
 			}
-			menu = Day;
+			currmenu = Day;
 			monthmenudirty = true;
 			daymenudirty = true;
 			break;
-		case KEY_UP:
+		case 'k':
 			month_menu_cursor_up();
 			break;
-		case KEY_DOWN:
+		case 'j':
 			month_menu_cursor_down();
 			break;
 	}
@@ -169,7 +177,7 @@ void day_menu_draw() {
 			mvwchgat(daywin, i, 0, len, A_UNDERLINE, 0, NULL);
 		}
 		if (i == daycursor) {
-			mvwchgat(daywin, i, 0, len, (menu == Day) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
+			mvwchgat(daywin, i, 0, len, (currmenu == Day) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
 		}
 	}
 	wrefresh(daywin);
@@ -177,7 +185,7 @@ void day_menu_draw() {
 
 void day_menu_update(int input) {
 	switch (input) {
-		case KEY_LEFT:
+		case 'h':
 			if (SELECTED_DAYNUM(daycursor) != currdaynum) {
 				if (currdaynum > 12) {
 					dayoffset = currdaynum - 11;
@@ -187,14 +195,14 @@ void day_menu_update(int input) {
 					daycursor = currdaynum - 1;
 				}
 			}
-			menu = Month;
+			currmenu = Month;
 			daymenudirty = true;
 			monthmenudirty = true;
 			break;
-		case KEY_UP:
+		case 'k':
 			day_menu_cursor_up();
 			break;
-		case KEY_DOWN:
+		case 'j':
 			day_menu_cursor_down();
 			break;
 	}
@@ -230,17 +238,9 @@ void exit_handler() {
 	endwin();
 }
 
-void init_date() {
-	time_t currentTime_t = time(NULL);
-	struct tm *currentTime = localtime(&currentTime_t);
-	year = currentTime->tm_year + 1900;
-	monthnum = currentTime->tm_mon + 1;
-	daynum = currentTime->tm_mday;
-}
-
 void init_ncurses() {
 	initscr();
-	start_color();
+	//start_color();
 	raw();
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
@@ -249,7 +249,7 @@ void init_ncurses() {
 
 	refresh();
 
-	menu = Day;
+	currmenu = Day;
 
 	//Create Menus
 	monthwin = newwin(13, 10, 0, 0);
