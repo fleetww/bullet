@@ -1,0 +1,272 @@
+#include "bullet.hpp"
+
+using namespace std;
+using namespace pugi;
+
+int main(int argc, char *argv[]) {
+	init_date();
+	int res = init_bullet_journal();
+	if (res) {
+		return res;
+	}
+	init_ncurses();
+
+	while (1) {
+		int ch = getch();
+		if (ch == 'q') break;
+
+		switch (menu) {
+			case Month:
+				month_menu_update(ch);
+				break;
+			case Day:
+				day_menu_update(ch);
+				break;
+		}
+	}
+
+	return 0;
+}
+
+char leap_year(int year) {
+	char leap = (year % 4 == 0);
+	if (year % 100 == 0 && year % 400 != 0) {
+		leap = 0;
+	}
+	return leap;
+}
+
+char day_of_week(int y, int m, int d) {
+	int daystotal = d;
+	for (int year = 1; year <= y; year++) {
+		int max_month = (year < y ? 12 : m - 1);
+		for (int month = 1; month <= max_month; month++) {
+			daystotal += NUM_DAYS(year, month);
+		}
+	}
+	return daystotal % 7;
+}
+
+bool file_exists(const std::string& path) {
+	struct stat buffer;
+	return (stat(path.c_str(), &buffer) == 0);
+}
+
+bool make_bullet_dir(const std::string& path) {
+	return !mkdir(path.c_str(), 0777);
+}
+
+bool make_bullet_journal(const std::string& path, int year) {
+	string xmlbase = "<calendar year=\"" + to_string(year) + "\"><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month></calendar>";
+
+	xml_parse_result result = bulletdoc.load_buffer(xmlbase.c_str(), xmlbase.length());
+	if (!result) {
+		return false;
+	}
+
+	xml_node calendar = bulletdoc.child("calendar");
+	xml_node month = calendar.child("month");
+	char leapyear = leap_year(year);
+
+	for (int m = 1; m <= 12; m++) {
+		int numdays = daytab[leapyear][m];
+		for (int d = 0; d < numdays; d++) {
+			xml_node day = month.append_child("day");
+		}
+		month = month.next_sibling("month");
+	}
+	return bulletdoc.save_file(path.c_str(),"\t", format_indent | format_no_empty_element_tags);
+}
+
+int init_bullet_journal() {
+	struct passwd *pw = getpwuid(getuid());
+	bulletdirpath = ((string) pw->pw_dir) + "/.bullet";
+	journalname = to_string(year) + ".xml";
+	journalpath = bulletdirpath + "/" + journalname;
+
+	//handle .bullet dir not existing, as well as year.xml not existing
+	if (!file_exists(journalpath)) {
+		cerr << "Bullet Journal (~/.bullet/" << journalname
+			<< ") does not exists, creating now\n";
+		if (!file_exists(bulletdirpath)) {
+			cerr << "Bullet Journal Directory (~/.bullet) does not exist, creating now\n";
+			if (!make_bullet_dir(bulletdirpath)) {
+				cerr << "Failed to create Bullet Journal Directory\n";
+				return 2;
+			}
+		}
+		if (!make_bullet_journal(journalpath, year)) {
+			cerr << "Failed to create Bullet Journal\n";
+			return 3;
+		}
+	} else {
+		xml_parse_result result = bulletdoc.load_file(journalpath.c_str());
+		if (!result) {
+			cerr << "Failed to load Bullet Journal\n";
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void month_menu_draw() {
+	for (int m = 0; m < 12; m++) {
+		mvwprintw(monthwin, m, 0, monthnames[m].c_str());
+	}
+
+	mvwchgat(monthwin, currmonthnum - 1, 0, monthnames[currmonthnum - 1].length(),
+			A_UNDERLINE, 0, NULL);
+	mvwchgat(monthwin, monthcursor, 0, monthnames[monthcursor].length(),
+			(menu == Month) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
+
+	wrefresh(monthwin);
+}
+
+void month_menu_update(int input) {
+	switch (input) {
+		case KEY_RIGHT:
+			if (monthcursor != (currmonthnum - 1)) {
+				monthcursor = currmonthnum - 1;
+			}
+			menu = Day;
+			monthmenudirty = true;
+			daymenudirty = true;
+			break;
+		case KEY_UP:
+			month_menu_cursor_up();
+			break;
+		case KEY_DOWN:
+			month_menu_cursor_down();
+			break;
+	}
+
+	if (monthmenudirty)
+		month_menu_draw();
+	monthmenudirty = false;
+}
+
+void month_menu_cursor_up() {
+	if (monthcursor > 0) {
+		monthcursor--;
+		monthmenudirty = true;
+	}
+}
+
+void month_menu_cursor_down() {
+	if (monthcursor < 11) {
+		monthcursor++;
+		monthmenudirty = true;
+	}
+}
+
+void day_menu_draw() {
+	for (int i = 0; i < 12; i++) {
+		int slcdaynum = SELECTED_DAYNUM(i);
+		mvwprintw(daywin, i, 0, "%d ", slcdaynum);
+
+		int len = (slcdaynum > 9) ? 2 : 1;
+		if (slcdaynum == currdaynum) {
+			mvwchgat(daywin, i, 0, len, A_UNDERLINE, 0, NULL);
+		}
+		if (i == daycursor) {
+			mvwchgat(daywin, i, 0, len, (menu == Day) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
+		}
+	}
+	wrefresh(daywin);
+}
+
+void day_menu_update(int input) {
+	switch (input) {
+		case KEY_LEFT:
+			if (SELECTED_DAYNUM(daycursor) != currdaynum) {
+				if (currdaynum > 12) {
+					dayoffset = currdaynum - 11;
+					daycursor = 11;
+				} else {
+					dayoffset = 1;
+					daycursor = currdaynum - 1;
+				}
+			}
+			menu = Month;
+			daymenudirty = true;
+			monthmenudirty = true;
+			break;
+		case KEY_UP:
+			day_menu_cursor_up();
+			break;
+		case KEY_DOWN:
+			day_menu_cursor_down();
+			break;
+	}
+
+	if (daymenudirty)
+		day_menu_draw();
+	daymenudirty = false;
+}
+
+void day_menu_cursor_up() {
+	if (daycursor > 0) {
+		daycursor--;
+		daymenudirty = true;
+	} else if (SELECTED_DAYNUM(daycursor) > 1) {
+		dayoffset--;
+		daymenudirty = true;
+	}
+}
+
+void day_menu_cursor_down() {
+	if (daycursor < 11) {
+		daycursor++;
+		daymenudirty = true;
+	} else if (SELECTED_DAYNUM(daycursor) < NUM_DAYS(year, monthnum)){
+		dayoffset++;
+		daymenudirty = true;
+	}
+}
+
+void exit_handler() {
+	delwin(monthwin);
+	delwin(daywin);
+	endwin();
+}
+
+void init_date() {
+	time_t currentTime_t = time(NULL);
+	struct tm *currentTime = localtime(&currentTime_t);
+	year = currentTime->tm_year + 1900;
+	monthnum = currentTime->tm_mon + 1;
+	daynum = currentTime->tm_mday;
+}
+
+void init_ncurses() {
+	initscr();
+	start_color();
+	raw();
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
+	noecho();
+	curs_set(0);
+
+	refresh();
+
+	menu = Day;
+
+	//Create Menus
+	monthwin = newwin(13, 10, 0, 0);
+	currmonthnum = monthnum;
+	monthcursor = monthnum - 1;
+	month_menu_draw();
+
+	daywin = newwin(13, 4, 0, 12);
+	currdaynum = daynum;
+	daycursor = (currdaynum < 12) ? currdaynum - 1 : 11;
+	dayoffset = (currdaynum < 13) ? 1 : currdaynum - 11;
+	day_menu_draw();
+
+	mvhline(12, 0, 0, COLS);
+	mvhline(12, 10, ACS_BTEE, 1);
+	mvvline(0, 10, 0, 12);
+
+	atexit(exit_handler);
+}
+
