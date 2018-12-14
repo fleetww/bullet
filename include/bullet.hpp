@@ -12,7 +12,7 @@
 #include "pugixml.hpp"
 
 /*
- * Date functions and static data structures
+ * Date and time functions and static data structures
  */
 static std::string weeknames[7] = {
 	"Sunday",
@@ -52,7 +52,10 @@ char day_of_week(int y, int m, int d);
 #define DAYOFWEEK(Y,M,D) (weeknames[day_of_week(Y,M,D)])
 #define DAYOFMONTH(M) (monthnames[M-1])
 
-int year, monthnum, daynum;
+static int year, monthnum, daynum;
+
+static struct tm *currenttime;
+
 
 /*
  * XML related functions and data structures
@@ -75,27 +78,26 @@ void init_ncurses();
 enum MenuState {
 	Month,
 	Day
-} currmenu;
+} static currmenu;
 
-WINDOW *monthwin;
-int monthcursor, currmonthnum;
-
-bool monthmenudirty;
+static WINDOW *monthwin;
+static int monthcursor, currmonthnum;
+static bool monthmenudirty;
 void month_menu_draw();
 void month_menu_update(int input);
 void month_menu_cursor_up();
 void month_menu_cursor_down();
 
-WINDOW *daywin;
-int daycursor, currdaynum, dayoffset;
-
-bool daymenudirty;
+static WINDOW *daywin;
+static int daycursor, currdaynum, dayoffset;
+static bool daymenudirty;
 void day_menu_draw();
 void day_menu_update(int input);
 void day_menu_cursor_up();
 void day_menu_cursor_down();
 
-WINDOW *infowin;
+static WINDOW *infowin;
+void info_win_draw();
 
 #define KEY_ESC 27
 #define KEY_INTR 3

@@ -11,9 +11,17 @@ int main(int argc, char *argv[]) {
 	}
 	init_ncurses();
 
+	int lastmin = -1;
 	while (1) {
 		int ch = getch();
 		if (ch == 'q') break;
+
+		time_t currenttimet = time(NULL);
+		currenttime = localtime(&currenttimet);
+		if (currenttime->tm_min != lastmin) {
+			lastmin = currenttime->tm_min;
+			info_win_draw();
+		}
 
 		switch (currmenu) {
 			case Month:
@@ -48,11 +56,11 @@ char day_of_week(int y, int m, int d) {
 }
 
 void init_date() {
-	time_t currentTime_t = time(NULL);
-	struct tm *currentTime = localtime(&currentTime_t);
-	year = currentTime->tm_year + 1900;
-	monthnum = currentTime->tm_mon + 1;
-	daynum = currentTime->tm_mday;
+	time_t currenttimet = time(NULL);
+	currenttime = localtime(&currenttimet);
+	year = currenttime->tm_year + 1900;
+	monthnum = currenttime->tm_mon + 1;
+	daynum = currenttime->tm_mday;
 }
 
 bool file_exists(const std::string& path) {
@@ -232,6 +240,28 @@ void day_menu_cursor_down() {
 	}
 }
 
+void info_win_draw() {
+
+	string currstring = DAYOFWEEK(currdaynum,currmonthnum,year) + " " +
+		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
+
+	int hour = currenttime->tm_hour;
+	bool isAM = hour >= 12;
+	hour = (hour > 12) ? hour - 12 : hour;
+
+	int min = currenttime->tm_min;
+	string timestring = to_string(hour) + ":" + ((min < 10) ? "0" : "");
+	timestring += to_string(min) + (isAM ? " AM" : " PM");
+	string nowstring = DAYOFWEEK(daynum,monthnum,year) + " " + DAYOFMONTH(monthnum);
+	nowstring += " " + to_string(daynum) + ", " + to_string(year) + " " + timestring;
+
+	wmove(infowin, 0, 0);
+	wclrtoeol(infowin);
+	mvwprintw(infowin, 0, 0, "Selected: %s\n", currstring.c_str());
+	wclrtoeol(infowin);
+	wprintw(infowin, "Today: %s\n", nowstring.c_str());
+	wrefresh(infowin);
+}
 
 void exit_handler() {
 	delwin(monthwin);
@@ -265,13 +295,7 @@ void init_ncurses() {
 	day_menu_draw();
 
 	infowin = newwin(LINES-13, COLS, 13, 0);
-	string curr_string = DAYOFWEEK(currdaynum,currmonthnum,year) + " " +
-		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
-	string now_string = DAYOFWEEK(daynum,monthnum,year) + " " +
-		DAYOFMONTH(monthnum) + " " + to_string(daynum) + ", " + to_string(year);
-	mvwprintw(infowin, 0, 0, "Selected: %s\n", curr_string.c_str());
-	wprintw(infowin, "Today: %s\n", now_string.c_str());
-	wrefresh(infowin);
+	info_win_draw();
 
 	mvhline(12, 0, 0, COLS);
 	mvhline(15, 0, 0, COLS);
