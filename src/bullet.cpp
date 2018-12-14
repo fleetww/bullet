@@ -122,7 +122,7 @@ void month_menu_draw() {
 		mvwprintw(monthwin, m, 0, monthnames[m].c_str());
 	}
 
-	mvwchgat(monthwin, currmonthnum - 1, 0, monthnames[currmonthnum - 1].length(),
+	mvwchgat(monthwin, currmonthnum - 1, 0, DAYOFMONTH(currmonthnum).length(),
 			A_UNDERLINE, 0, NULL);
 	mvwchgat(monthwin, monthcursor, 0, monthnames[monthcursor].length(),
 			(currmenu == Month) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
@@ -232,6 +232,7 @@ void day_menu_cursor_down() {
 	}
 }
 
+
 void exit_handler() {
 	delwin(monthwin);
 	delwin(daywin);
@@ -263,7 +264,17 @@ void init_ncurses() {
 	dayoffset = (currdaynum < 13) ? 1 : currdaynum - 11;
 	day_menu_draw();
 
+	infowin = newwin(LINES-13, COLS, 13, 0);
+	string curr_string = DAYOFWEEK(currdaynum,currmonthnum,year) + " " +
+		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
+	string now_string = DAYOFWEEK(daynum,monthnum,year) + " " +
+		DAYOFMONTH(monthnum) + " " + to_string(daynum) + ", " + to_string(year);
+	mvwprintw(infowin, 0, 0, "Selected: %s\n", curr_string.c_str());
+	wprintw(infowin, "Today: %s\n", now_string.c_str());
+	wrefresh(infowin);
+
 	mvhline(12, 0, 0, COLS);
+	mvhline(15, 0, 0, COLS);
 	mvhline(12, 10, ACS_BTEE, 1);
 	mvvline(0, 10, 0, 12);
 

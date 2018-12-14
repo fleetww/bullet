@@ -48,6 +48,9 @@ void init_date();
 char leap_year(int year);
 char day_of_week(int y, int m, int d);
 #define NUM_DAYS(X,Z) (daytab[leap_year(X)][Z])
+#define SELECTED_DAYNUM(i) (i + dayoffset)
+#define DAYOFWEEK(Y,M,D) (weeknames[day_of_week(Y,M,D)])
+#define DAYOFMONTH(M) (monthnames[M-1])
 
 int year, monthnum, daynum;
 
@@ -63,22 +66,19 @@ bool make_bullet_dir(const std::string& path);
 bool make_bullet_journal(const std::string& path, int year);
 
 /*
- * ncurses related functions and data structures
+ * User Interface (UI)
  */
-WINDOW *monthwin;
-int monthcursor, currmonthnum;
-
-WINDOW *daywin;
-int daycursor, currdaynum, dayoffset;
 
 void init_ncurses();
 
-#define SELECTED_DAYNUM(i) (i + dayoffset)
 
 enum MenuState {
 	Month,
 	Day
 } currmenu;
+
+WINDOW *monthwin;
+int monthcursor, currmonthnum;
 
 bool monthmenudirty;
 void month_menu_draw();
@@ -86,11 +86,16 @@ void month_menu_update(int input);
 void month_menu_cursor_up();
 void month_menu_cursor_down();
 
+WINDOW *daywin;
+int daycursor, currdaynum, dayoffset;
+
 bool daymenudirty;
 void day_menu_draw();
 void day_menu_update(int input);
 void day_menu_cursor_up();
 void day_menu_cursor_down();
+
+WINDOW *infowin;
 
 #define KEY_ESC 27
 #define KEY_INTR 3
