@@ -263,7 +263,7 @@ void day_to_month_menu() {
 }
 
 void info_win_draw() {
-	string currstring = DAYOFWEEK(currdaynum,currmonthnum,year) + " " +
+	string currstring = DAYOFWEEK(year,currmonthnum,currdaynum) + " " +
 		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
 
 	wmove(infowin, 0, 0);
