@@ -45,8 +45,8 @@ char leap_year(int year) {
 char day_of_week(int y, int m, int d) {
 	int daystotal = d;
 	for (int year = 1; year <= y; year++) {
-		int max_month = (year < y ? 12 : m - 1);
-		for (int month = 1; month <= max_month; month++) {
+		int maxmonth = (year < y ? 12 : m - 1);
+		for (int month = 1; month <= maxmonth; month++) {
 			daystotal += NUM_DAYS(year, month);
 		}
 	}

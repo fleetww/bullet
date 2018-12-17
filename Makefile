@@ -5,7 +5,7 @@ BLT = src/bullet.cpp include/bullet.hpp
 bullet : $(OBJ)
 	g++ -o bullet -std=c++11 -I./include $(OBJ) -lncurses
 
-build/bullet.o : $(BLT)
+build/bullet.o : $(BLT) build/pugixml.o
 	g++ -c -o build/bullet.o -std=c++11 -I./include src/bullet.cpp
 
 build/pugixml.o : $(PUGI)
