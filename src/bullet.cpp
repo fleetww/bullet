@@ -136,6 +136,7 @@ void month_menu_draw() {
 
 void month_menu_update(int input) {
 	switch (input) {
+		case 10:
 		case 'l':
 			month_to_day_menu();
 			break;
@@ -273,7 +274,19 @@ void info_win_draw() {
 }
 
 void task_menu_draw() {
-	return;
+	xml_node calendar = bulletdoc.child("calendar");
+	xml_node month = calendar.child("month");
+	for (int i = 1; i != currmonthnum; i++) {
+		month = month.next_sibling("month");
+	}
+	xml_node day = month.child("day");
+	for (int i = 1; i != currdaynum; i++) {
+		day = day.next_sibling("day");
+	}
+	for (auto task = day.child("task"); task; task = task.next_sibling("task")) {
+		wprintw(taskwin, "%s\n", task.text().get());
+	}
+	wrefresh(taskwin);
 }
 
 void task_menu_update(int input) {
@@ -288,11 +301,12 @@ void task_menu_update(int input) {
 void select_date() {
 	currmonthnum = monthcursor + 1;
 	currdaynum = SELECTED_DAYNUM(daycursor);
-
 	currmenu = Task;
+
 	month_menu_draw();
 	day_menu_draw();
 	info_win_draw();
+	task_menu_draw();
 }
 
 void exit_handler() {
@@ -329,7 +343,7 @@ void init_ncurses() {
 	infowin = newwin(1, COLS, 13, 0);
 	info_win_draw();
 
-	taskwin = newwin(LINES-15, COLS, 14, 0);
+	taskwin = newwin(LINES-16, COLS, 15, 0);
 	task_menu_draw();
 
 	mvhline(12, 0, 0, COLS);
