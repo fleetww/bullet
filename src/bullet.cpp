@@ -14,7 +14,9 @@ int main(int argc, char *argv[]) {
 	int lastmin = -1;
 	while (1) {
 		int ch = getch();
-		if (ch == 'q') break;
+		if (ch == 'q') {
+			break;
+		}
 
 		switch (currmenu) {
 			case Month:
@@ -29,7 +31,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	return 0;
+	exit(0);
 }
 
 char leap_year(int year) {
@@ -276,8 +278,10 @@ void info_win_draw() {
 
 void task_menu_draw() {
 	wclear(taskwin);
-	for (xml_node task : tasks) {
-		wprintw(taskwin, "%s\n", task.text().get());
+
+	int numlines = (LINES-16) < (tasks.size()-taskoffset) ? LINES-16 : tasks.size()-taskoffset;
+	for (int t = taskoffset; t < numlines - taskoffset; t++) {
+		wprintw(taskwin, "%s\n", tasks[t].text().get());
 	}
 	wrefresh(taskwin);
 }
@@ -296,13 +300,13 @@ void cache_tasks() {
 	for (int m = 1; m != currmonthnum; m++) {
 		month = month.next_sibling("month");
 	}
-	xml_node day = month.child("day");
+	daynode = month.child("day");
 	for (int d = 1; d != currdaynum; d++) {
-		day = day.next_sibling("day");
+		daynode = daynode.next_sibling("day");
 	}
 
 	tasks.clear();
-	for (xml_node task = day.child("task"); task; task = task.next_sibling("task")) {
+	for (xml_node task : daynode.children("task")) {
 		tasks.push_back(task);
 	}
 }
@@ -355,6 +359,9 @@ void init_ncurses() {
 	infowin = newwin(1, COLS, 13, 0);
 	info_win_draw();
 
+	taskcursor = 0;
+	currtasknum = 0;
+	taskoffset = 0;
 	taskwin = newwin(LINES-16, COLS, 15, 0);
 	cache_tasks();
 	task_menu_draw();

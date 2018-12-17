@@ -62,6 +62,7 @@ static struct tm *currenttime;
  */
 static pugi::xml_document bulletdoc;
 static pugi::xml_node calendar;
+static pugi::xml_node daynode;
 
 std::vector<pugi::xml_node> tasks;
 
@@ -106,6 +107,7 @@ static WINDOW *infowin;
 void info_win_draw();
 
 static WINDOW *taskwin;
+static int taskcursor, currtasknum, taskoffset;
 void task_menu_draw();
 void task_menu_update(int input);
 
