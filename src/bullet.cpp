@@ -16,19 +16,15 @@ int main(int argc, char *argv[]) {
 		int ch = getch();
 		if (ch == 'q') break;
 
-		time_t currenttimet = time(NULL);
-		currenttime = localtime(&currenttimet);
-		if (currenttime->tm_min != lastmin) {
-			lastmin = currenttime->tm_min;
-			info_win_draw();
-		}
-
 		switch (currmenu) {
 			case Month:
 				month_menu_update(ch);
 				break;
 			case Day:
 				day_menu_update(ch);
+				break;
+			case Task:
+				task_menu_update(ch);
 				break;
 		}
 	}
@@ -141,12 +137,7 @@ void month_menu_draw() {
 void month_menu_update(int input) {
 	switch (input) {
 		case 'l':
-			if (monthcursor != (currmonthnum - 1)) {
-				monthcursor = currmonthnum - 1;
-			}
-			currmenu = Day;
-			monthmenudirty = true;
-			daymenudirty = true;
+			month_to_day_menu();
 			break;
 		case 'k':
 			month_menu_cursor_up();
@@ -155,24 +146,52 @@ void month_menu_update(int input) {
 			month_menu_cursor_down();
 			break;
 	}
-
-	if (monthmenudirty)
-		month_menu_draw();
-	monthmenudirty = false;
 }
 
 void month_menu_cursor_up() {
-	if (monthcursor > 0) {
-		monthcursor--;
-		monthmenudirty = true;
+	if (monthcursor == 0) {
+		return;
 	}
+	monthcursor--;
+	if ((monthcursor + 1) == currmonthnum) {
+		if (currdaynum < dayoffset) {
+			dayoffset = currdaynum;
+		} else if ((dayoffset + 11) < currdaynum) {
+			dayoffset = currdaynum - 11;
+		}
+		daycursor = currdaynum - dayoffset;
+	} else {
+		dayoffset = 1;
+		daycursor = 0;
+	}
+	month_menu_draw();
+	day_menu_draw();
 }
 
 void month_menu_cursor_down() {
-	if (monthcursor < 11) {
-		monthcursor++;
-		monthmenudirty = true;
+	if (monthcursor == 11) {
+		return;
 	}
+	monthcursor++;
+	if ((monthcursor + 1) == currmonthnum) {
+		if (currdaynum < dayoffset) {
+			dayoffset = currdaynum;
+		} else if ((dayoffset + 11) < currdaynum) {
+			dayoffset = currdaynum - 11;
+		}
+		daycursor = currdaynum - dayoffset;
+	} else {
+		dayoffset = 1;
+		daycursor = 0;
+	}
+	month_menu_draw();
+	day_menu_draw();
+}
+
+void month_to_day_menu() {
+	currmenu = Day;
+	month_menu_draw();
+	day_menu_draw();
 }
 
 void day_menu_draw() {
@@ -181,11 +200,12 @@ void day_menu_draw() {
 		mvwprintw(daywin, i, 0, "%d ", slcdaynum);
 
 		int len = (slcdaynum > 9) ? 2 : 1;
-		if (slcdaynum == currdaynum) {
+		if ((monthcursor + 1) == currmonthnum && slcdaynum == currdaynum) {
 			mvwchgat(daywin, i, 0, len, A_UNDERLINE, 0, NULL);
 		}
 		if (i == daycursor) {
-			mvwchgat(daywin, i, 0, len, (currmenu == Day) ? A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
+			mvwchgat(daywin, i, 0, len, (currmenu == Day) ?
+					A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
 		}
 	}
 	wrefresh(daywin);
@@ -194,18 +214,7 @@ void day_menu_draw() {
 void day_menu_update(int input) {
 	switch (input) {
 		case 'h':
-			if (SELECTED_DAYNUM(daycursor) != currdaynum) {
-				if (currdaynum > 12) {
-					dayoffset = currdaynum - 11;
-					daycursor = 11;
-				} else {
-					dayoffset = 1;
-					daycursor = currdaynum - 1;
-				}
-			}
-			currmenu = Month;
-			daymenudirty = true;
-			monthmenudirty = true;
+			day_to_month_menu();
 			break;
 		case 'k':
 			day_menu_cursor_up();
@@ -213,54 +222,77 @@ void day_menu_update(int input) {
 		case 'j':
 			day_menu_cursor_down();
 			break;
+		case 10:
+			select_date();
+			break;
 	}
-
-	if (daymenudirty)
-		day_menu_draw();
-	daymenudirty = false;
 }
 
 void day_menu_cursor_up() {
 	if (daycursor > 0) {
 		daycursor--;
-		daymenudirty = true;
+		day_menu_draw();
 	} else if (SELECTED_DAYNUM(daycursor) > 1) {
 		dayoffset--;
-		daymenudirty = true;
+		day_menu_draw();
 	}
 }
 
 void day_menu_cursor_down() {
 	if (daycursor < 11) {
 		daycursor++;
-		daymenudirty = true;
-	} else if (SELECTED_DAYNUM(daycursor) < NUM_DAYS(year, monthnum)){
+		day_menu_draw();
+	} else if (SELECTED_DAYNUM(daycursor) < NUM_DAYS(year, monthcursor + 1)){
 		dayoffset++;
-		daymenudirty = true;
+		day_menu_draw();
 	}
 }
 
-void info_win_draw() {
+void day_to_month_menu() {
+	if ((monthcursor + 1) == currmonthnum && SELECTED_DAYNUM(daycursor) != currdaynum) {
+		if (currdaynum < dayoffset) {
+			dayoffset = currdaynum;
+		} else if ((dayoffset + 11) < currdaynum) {
+			dayoffset = currdaynum - 11;
+		}
+		daycursor = currdaynum - dayoffset;
+	}
+	currmenu = Month;
+	day_menu_draw();
+	month_menu_draw();
+}
 
+void info_win_draw() {
 	string currstring = DAYOFWEEK(currdaynum,currmonthnum,year) + " " +
 		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
-
-	int hour = currenttime->tm_hour;
-	bool isAM = hour >= 12;
-	hour = (hour > 12) ? hour - 12 : hour;
-
-	int min = currenttime->tm_min;
-	string timestring = to_string(hour) + ":" + ((min < 10) ? "0" : "");
-	timestring += to_string(min) + (isAM ? " AM" : " PM");
-	string nowstring = DAYOFWEEK(daynum,monthnum,year) + " " + DAYOFMONTH(monthnum);
-	nowstring += " " + to_string(daynum) + ", " + to_string(year) + " " + timestring;
 
 	wmove(infowin, 0, 0);
 	wclrtoeol(infowin);
 	mvwprintw(infowin, 0, 0, "Selected: %s\n", currstring.c_str());
-	wclrtoeol(infowin);
-	wprintw(infowin, "Today: %s\n", nowstring.c_str());
 	wrefresh(infowin);
+}
+
+void task_menu_draw() {
+	return;
+}
+
+void task_menu_update(int input) {
+	switch (input) {
+		case ':':
+			currmenu = Day;
+			day_menu_draw();
+			break;
+	}
+}
+
+void select_date() {
+	currmonthnum = monthcursor + 1;
+	currdaynum = SELECTED_DAYNUM(daycursor);
+
+	currmenu = Task;
+	month_menu_draw();
+	day_menu_draw();
+	info_win_draw();
 }
 
 void exit_handler() {
@@ -274,13 +306,13 @@ void init_ncurses() {
 	//start_color();
 	raw();
 	keypad(stdscr, TRUE);
-	nodelay(stdscr, TRUE);
+	//nodelay(stdscr, TRUE);
 	noecho();
 	curs_set(0);
 
 	refresh();
 
-	currmenu = Day;
+	currmenu = Task;
 
 	//Create Menus
 	monthwin = newwin(13, 10, 0, 0);
@@ -294,13 +326,16 @@ void init_ncurses() {
 	dayoffset = (currdaynum < 13) ? 1 : currdaynum - 11;
 	day_menu_draw();
 
-	infowin = newwin(LINES-13, COLS, 13, 0);
+	infowin = newwin(1, COLS, 13, 0);
 	info_win_draw();
 
+	taskwin = newwin(LINES-15, COLS, 14, 0);
+	task_menu_draw();
+
 	mvhline(12, 0, 0, COLS);
-	mvhline(15, 0, 0, COLS);
-	mvhline(12, 10, ACS_BTEE, 1);
 	mvvline(0, 10, 0, 12);
+	mvhline(12, 10, ACS_BTEE, 1);
+	mvhline(14, 0, 0, COLS);
 
 	atexit(exit_handler);
 }

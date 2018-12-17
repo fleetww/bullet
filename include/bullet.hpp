@@ -48,7 +48,6 @@ void init_date();
 char leap_year(int year);
 char day_of_week(int y, int m, int d);
 #define NUM_DAYS(X,Z) (daytab[leap_year(X)][Z])
-#define SELECTED_DAYNUM(i) (i + dayoffset)
 #define DAYOFWEEK(Y,M,D) (weeknames[day_of_week(Y,M,D)])
 #define DAYOFMONTH(M) (monthnames[M-1])
 
@@ -77,29 +76,38 @@ void init_ncurses();
 
 enum MenuState {
 	Month,
-	Day
+	Day,
+	Task
 } static currmenu;
 
 static WINDOW *monthwin;
 static int monthcursor, currmonthnum;
-static bool monthmenudirty;
 void month_menu_draw();
 void month_menu_update(int input);
 void month_menu_cursor_up();
 void month_menu_cursor_down();
+void month_to_day_menu();
 
 static WINDOW *daywin;
 static int daycursor, currdaynum, dayoffset;
-static bool daymenudirty;
 void day_menu_draw();
 void day_menu_update(int input);
 void day_menu_cursor_up();
 void day_menu_cursor_down();
+void day_to_month_menu();
+#define SELECTED_DAYNUM(i) (i + dayoffset)
 
 static WINDOW *infowin;
 void info_win_draw();
 
+static WINDOW *taskwin;
+void task_menu_draw();
+void task_menu_update(int input);
+
+void select_date();
+
 #define KEY_ESC 27
 #define KEY_INTR 3
+//#define KEY_ENTER 10
 
 void exit_handler();
