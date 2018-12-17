@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <vector>
 #include <ncurses.h>
 #include "pugixml.hpp"
 
@@ -60,6 +61,10 @@ static struct tm *currenttime;
  * XML related functions and data structures
  */
 static pugi::xml_document bulletdoc;
+static pugi::xml_node calendar;
+
+std::vector<pugi::xml_node> tasks;
+
 static std::string bulletdirpath, journalname, journalpath;
 
 int init_bullet_journal();
@@ -105,6 +110,7 @@ void task_menu_draw();
 void task_menu_update(int input);
 
 void select_date();
+void cache_tasks();
 
 #define KEY_ESC 27
 #define KEY_INTR 3

@@ -118,6 +118,7 @@ int init_bullet_journal() {
 			return 1;
 		}
 	}
+	calendar = bulletdoc.child("calendar");
 	return 0;
 }
 
@@ -274,16 +275,8 @@ void info_win_draw() {
 }
 
 void task_menu_draw() {
-	xml_node calendar = bulletdoc.child("calendar");
-	xml_node month = calendar.child("month");
-	for (int i = 1; i != currmonthnum; i++) {
-		month = month.next_sibling("month");
-	}
-	xml_node day = month.child("day");
-	for (int i = 1; i != currdaynum; i++) {
-		day = day.next_sibling("day");
-	}
-	for (auto task = day.child("task"); task; task = task.next_sibling("task")) {
+	wclear(taskwin);
+	for (xml_node task : tasks) {
 		wprintw(taskwin, "%s\n", task.text().get());
 	}
 	wrefresh(taskwin);
@@ -298,9 +291,28 @@ void task_menu_update(int input) {
 	}
 }
 
+void cache_tasks() {
+	xml_node month = calendar.child("month");
+	for (int m = 1; m != currmonthnum; m++) {
+		month = month.next_sibling("month");
+	}
+	xml_node day = month.child("day");
+	for (int d = 1; d != currdaynum; d++) {
+		day = day.next_sibling("day");
+	}
+
+	tasks.clear();
+	for (xml_node task = day.child("task"); task; task = task.next_sibling("task")) {
+		tasks.push_back(task);
+	}
+}
+
 void select_date() {
+
 	currmonthnum = monthcursor + 1;
 	currdaynum = SELECTED_DAYNUM(daycursor);
+	cache_tasks();
+
 	currmenu = Task;
 
 	month_menu_draw();
@@ -344,6 +356,7 @@ void init_ncurses() {
 	info_win_draw();
 
 	taskwin = newwin(LINES-16, COLS, 15, 0);
+	cache_tasks();
 	task_menu_draw();
 
 	mvhline(12, 0, 0, COLS);
