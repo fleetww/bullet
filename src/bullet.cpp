@@ -279,9 +279,13 @@ void info_win_draw() {
 void task_menu_draw() {
 	wclear(taskwin);
 
-	int numlines = (LINES-16) < (tasks.size()-taskoffset) ? LINES-16 : tasks.size()-taskoffset;
+	int numlines = ((LINES-16) < (tasks.size()-taskoffset)) ? LINES-16 : tasks.size()-taskoffset;
 	for (int t = taskoffset; t < numlines - taskoffset; t++) {
-		wprintw(taskwin, "%s\n", tasks[t].text().get());
+		mvwprintw(taskwin, t - taskoffset, 0, "%s\n", tasks[t].text().get());
+
+		if (t == SELECTED_TASK(taskcursor)) {
+			mvwchgat(taskwin, taskcursor, 0, strlen(tasks[t].text().as_string()), A_UNDERLINE, 0, NULL);
+		}
 	}
 	wrefresh(taskwin);
 }
@@ -292,7 +296,35 @@ void task_menu_update(int input) {
 			currmenu = Day;
 			day_menu_draw();
 			break;
+		case 'k':
+			task_menu_cursor_up();
+			break;
+		case 'j':
+			task_menu_cursor_down();
+			break;
 	}
+}
+
+void task_menu_cursor_up() {
+	if ((taskcursor + taskoffset) > 0) {
+		if (taskcursor == 0) {
+			taskoffset--;
+		} else {
+			taskcursor--;
+		}
+	}
+	task_menu_draw();
+}
+
+void task_menu_cursor_down() {
+	if ((taskcursor + taskoffset) < (tasks.size()-1)) {
+		if (taskcursor >= (LINES-16)) {
+			taskoffset++;
+		} else {
+			taskcursor++;
+		}
+	}
+	task_menu_draw();
 }
 
 void cache_tasks() {

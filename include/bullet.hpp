@@ -101,7 +101,7 @@ void day_menu_update(int input);
 void day_menu_cursor_up();
 void day_menu_cursor_down();
 void day_to_month_menu();
-#define SELECTED_DAYNUM(i) (i + dayoffset)
+#define SELECTED_DAYNUM(D) (D + dayoffset)
 
 static WINDOW *infowin;
 void info_win_draw();
@@ -110,6 +110,9 @@ static WINDOW *taskwin;
 static int taskcursor, currtasknum, taskoffset;
 void task_menu_draw();
 void task_menu_update(int input);
+void task_menu_cursor_up();
+void task_menu_cursor_down();
+#define SELECTED_TASK(T) (T + taskoffset)
 
 void select_date();
 void cache_tasks();
