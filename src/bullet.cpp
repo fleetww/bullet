@@ -28,6 +28,9 @@ int main(int argc, char *argv[]) {
 			case Task:
 				task_menu_update(ch);
 				break;
+			case Edit:
+				edit_prompt_update(ch);
+				break;
 		}
 	}
 
@@ -89,7 +92,8 @@ bool make_bullet_journal(const std::string& path, int year) {
 		}
 		month = month.next_sibling("month");
 	}
-	return bulletdoc.save_file(path.c_str(),"\t", format_indent | format_no_empty_element_tags);
+	bulletdirty = true;
+	return true;
 }
 
 int init_bullet_journal() {
@@ -122,6 +126,12 @@ int init_bullet_journal() {
 	}
 	calendar = bulletdoc.child("calendar");
 	return 0;
+}
+
+void save_bullet_journal() {
+	ofstream file(journalpath, ofstream::trunc);
+	bulletdoc.save(file);
+	file.close();
 }
 
 void month_menu_draw() {
@@ -302,6 +312,10 @@ void task_menu_update(int input) {
 		case 'j':
 			task_menu_cursor_down();
 			break;
+		case 10:
+			if (tasks.size() > 0)
+				select_task();
+			break;
 	}
 }
 
@@ -325,6 +339,59 @@ void task_menu_cursor_down() {
 		}
 	}
 	task_menu_draw();
+}
+
+void select_task() {
+	currtasknum = SELECTED_TASK(taskcursor);
+	currmenu = Edit;
+
+	editbuffer = tasks[currtasknum].text().get();
+	editcursor = strlen(tasks[currtasknum].text().get());
+	edit_prompt_draw();
+}
+
+void edit_prompt_draw() {
+	curs_set(1);
+	wmove(taskwin, taskcursor, 0);
+	wclrtoeol(taskwin);
+	wprintw(taskwin, "%s", editbuffer.c_str());
+	mvwchgat(taskwin, taskcursor, 0, editbuffer.size(), A_STANDOUT, 0, NULL);
+	wmove(taskwin, taskcursor, editcursor);
+	wrefresh(taskwin);
+}
+
+void edit_prompt_update(int input) {
+	switch (input) {
+		case KEY_ESC:
+			edit_prompt_cancel();
+			break;
+		case KEY_BACKSPACE:
+			edit_prompt_bs();
+			break;
+		case 10:
+			edit_prompt_finish();
+			break;
+	}
+}
+
+void edit_prompt_cancel() {
+	currmenu = Task;
+	curs_set(0);
+	task_menu_draw();
+}
+
+void edit_prompt_bs() {
+	if (editcursor <= 0) {
+		return;
+	}
+	editbuffer.erase(--editcursor, 1);
+	edit_prompt_draw();
+}
+
+void edit_prompt_finish() {
+	bulletdirty = true;
+	tasks[currtasknum].text() = editbuffer.c_str();
+	edit_prompt_cancel();
 }
 
 void cache_tasks() {
@@ -361,6 +428,10 @@ void exit_handler() {
 	delwin(monthwin);
 	delwin(daywin);
 	endwin();
+	//TODO handle saving journal back to file
+	if (bulletdirty) {
+		save_bullet_journal();
+	}
 }
 
 void init_ncurses() {

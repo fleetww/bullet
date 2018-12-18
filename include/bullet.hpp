@@ -72,6 +72,7 @@ int init_bullet_journal();
 bool file_exists(const std::string& path);
 bool make_bullet_dir(const std::string& path);
 bool make_bullet_journal(const std::string& path, int year);
+void save_bullet_journal();
 
 /*
  * User Interface (UI)
@@ -83,7 +84,8 @@ void init_ncurses();
 enum MenuState {
 	Month,
 	Day,
-	Task
+	Task,
+	Edit
 } static currmenu;
 
 static WINDOW *monthwin;
@@ -114,8 +116,20 @@ void task_menu_cursor_up();
 void task_menu_cursor_down();
 #define SELECTED_TASK(T) (T + taskoffset)
 
+void select_task();
+
+int editcursor;
+static std::string editbuffer;
+void edit_prompt_draw();
+void edit_prompt_update(int input);
+void edit_prompt_cancel();
+void edit_prompt_bs();
+void edit_prompt_finish();
+
 void select_date();
 void cache_tasks();
+
+static bool bulletdirty = false;
 
 #define KEY_ESC 27
 #define KEY_INTR 3
