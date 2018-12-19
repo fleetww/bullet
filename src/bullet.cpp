@@ -11,8 +11,23 @@ int main(int argc, char *argv[]) {
 	}
 	init_ncurses();
 
-	int lastmin = -1;
+	fd_set rfds;
+	struct timeval tv;
+	int retval = 0;
 	while (1) {
+		FD_ZERO(&rfds);
+		FD_SET(0, &rfds);
+		tv.tv_sec = 5;
+		tv.tv_usec = 0;
+		retval = select(1, &rfds, NULL, NULL, &tv);
+		if (retval == -1 && errno != EINTR) {
+			perror("select()");
+		}
+		time_win_draw();
+
+		if (!FD_ISSET(0, &rfds)) {
+			continue;
+		}
 		int ch = getch();
 		if (ch == 'q') {
 			break;
@@ -218,9 +233,10 @@ void month_to_day_menu() {
 }
 
 void day_menu_draw() {
+	wclear(daywin);
 	for (int i = 0; i < 12; i++) {
 		int slcdaynum = SELECTED_DAYNUM(i);
-		mvwprintw(daywin, i, 0, "%d ", slcdaynum);
+		mvwprintw(daywin, i, 0, "%d", slcdaynum);
 
 		int len = (slcdaynum > 9) ? 2 : 1;
 		if ((monthcursor + 1) == currmonthnum && slcdaynum == currdaynum) {
@@ -248,6 +264,7 @@ void day_menu_update(int input) {
 		case 10:
 			select_date();
 			break;
+		//TODO add cancel functionality
 	}
 }
 
@@ -285,13 +302,28 @@ void day_to_month_menu() {
 	month_menu_draw();
 }
 
+void time_win_draw() {
+	wclear(timewin);
+	mvwprintw(timewin, 0, 0, "Current Date:");
+
+	init_date();
+	char buffer[38];
+	strftime(buffer, 38, "%A %B %d, %Y %I:%M %p", currenttime);
+
+	wattron(timewin, A_BOLD|A_UNDERLINE);
+	mvwprintw(timewin, 1, 0, "%s", buffer);
+	wattroff(timewin, A_BOLD|A_UNDERLINE);
+	wrefresh(timewin);
+}
+
 void info_win_draw() {
 	string currstring = DAYOFWEEK(year,currmonthnum,currdaynum) + " " +
 		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
 
-	wmove(infowin, 0, 0);
-	wclrtoeol(infowin);
-	mvwprintw(infowin, 0, 0, "Selected: %s\n", currstring.c_str());
+	wclear(infowin);
+	mvwprintw(infowin, 0, 0, "Selected: \n%s", currstring.c_str());
+	mvwchgat(infowin, 1, 0, currstring.size(), A_BOLD|A_UNDERLINE, 0, NULL);
+
 	wrefresh(infowin);
 }
 
@@ -299,14 +331,14 @@ void task_menu_draw() {
 	wclear(taskwin);
 
 	int t = 0;
-	while (SELECTED_TASK(t) < tasks.size() && t < (LINES-16)) {
+	while (SELECTED_TASK(t) < tasks.size() && t < (LINES-14)) {
 		mvwprintw(taskwin, t, 0, "%s", tasks[SELECTED_TASK(t)].text().get());
 		t++;
 	}
 
-	if (tasks.size() > 0) {
+	if (!tasks.empty()) {
 		int len = strlen(tasks[SELECTED_TASK(taskcursor)].text().as_string());
-		mvwchgat(taskwin, taskcursor, 0, len, A_UNDERLINE, 0, NULL);
+		mvwchgat(taskwin, taskcursor, 0, len, A_UNDERLINE|A_BOLD, 0, NULL);
 	}
 	wrefresh(taskwin);
 }
@@ -353,7 +385,7 @@ void task_menu_cursor_up() {
 void task_menu_cursor_down() {
 	if (SELECTED_TASK(taskcursor) >= tasks.size()-1) {
 		return;
-	} else if ((taskcursor+1) < (LINES-16)) {
+	} else if ((taskcursor+1) < (LINES-14)) {
 		taskcursor++;
 	} else {
 		taskoffset++;
@@ -362,13 +394,14 @@ void task_menu_cursor_down() {
 }
 
 void delete_task() {
-	if (tasks.size() == 0) {
+	if (tasks.empty()) {
 		return;
 	}
 	daynode.remove_child(tasks[SELECTED_TASK(taskcursor)]);
 	tasks.erase(tasks.begin()+SELECTED_TASK(taskcursor));
 	task_menu_cursor_up();
 	bulletdirty = true;
+	task_menu_draw();
 }
 
 void append_task() {
@@ -377,9 +410,9 @@ void append_task() {
 	currtasknum = tasks.size() - 1;
 
 	//scroll task menu to new task
-	if (tasks.size() > (LINES-16)) {
-		taskoffset = tasks.size() - (LINES-16);
-		taskcursor = (LINES-17);
+	if (tasks.size() > (LINES-14)) {
+		taskoffset = tasks.size() - (LINES-14);
+		taskcursor = (LINES-15);
 	} else {
 		taskoffset = 0;
 		taskcursor = currtasknum;
@@ -513,6 +546,9 @@ void select_date() {
 void exit_handler() {
 	delwin(monthwin);
 	delwin(daywin);
+	delwin(taskwin);
+	delwin(infowin);
+	delwin(timewin);
 	endwin();
 	save_bullet_journal();
 }
@@ -530,32 +566,45 @@ void init_ncurses() {
 
 	currmenu = Task;
 
-	//Create Menus
-	monthwin = newwin(13, 10, 0, 0);
+	//Create interface
+	monthwin = newwin(12, 9, 0, 0);
 	currmonthnum = monthnum;
 	monthcursor = monthnum - 1;
 	month_menu_draw();
 
-	daywin = newwin(13, 4, 0, 12);
+
+	daywin = newwin(12, 2, 0, 10);
 	currdaynum = daynum;
-	daycursor = (currdaynum < 12) ? currdaynum - 1 : 11;
+	daycursor = (currdaynum <= 12) ? currdaynum - 1 : 11;
 	dayoffset = (currdaynum < 13) ? 1 : currdaynum - 11;
 	day_menu_draw();
 
-	infowin = newwin(1, COLS, 13, 0);
+	timewin = newwin(2, 37, 0, 13);
+	time_win_draw();
+
+	infowin = newwin(2, 37, 3, 13);
 	info_win_draw();
+
+	mvvline(0, 9, 0, 12);
+	refresh(); //makes daymenu not blank, don't know why
+	mvvline(0, 12, 0, 12);
+	mvhline(12, 0, 0, COLS);
+	mvhline(12, 9, ACS_BTEE, 1);
+	mvhline(12, 12, ACS_BTEE, 1);
 
 	taskcursor = 0;
 	currtasknum = 0;
 	taskoffset = 0;
-	taskwin = newwin(LINES-16, COLS, 15, 0);
+	taskwin = newwin(LINES-14, COLS, 13, 0);
 	cache_tasks();
 	task_menu_draw();
 
-	mvhline(12, 0, 0, COLS);
-	mvvline(0, 10, 0, 12);
-	mvhline(12, 10, ACS_BTEE, 1);
-	mvhline(14, 0, 0, COLS);
+	/*
+	mvvline(0, 15, 0, 12);
+	mvhline(12, 15, ACS_BTEE, 1);
+	*/
+
+	refresh();
 
 	atexit(exit_handler);
 }

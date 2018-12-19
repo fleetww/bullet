@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <vector>
+#include <sys/select.h>
 #include <ncurses.h>
 #include "pugixml.hpp"
 
@@ -104,6 +105,9 @@ void day_menu_cursor_up();
 void day_menu_cursor_down();
 void day_to_month_menu();
 #define SELECTED_DAYNUM(D) (D + dayoffset)
+
+static WINDOW *timewin;
+void time_win_draw();
 
 static WINDOW *infowin;
 void info_win_draw();
