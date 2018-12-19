@@ -49,7 +49,7 @@ static char daytab[2][13] = {
 void init_date();
 char leap_year(int year);
 char day_of_week(int y, int m, int d);
-#define NUM_DAYS(X,Z) (daytab[leap_year(X)][Z])
+#define NUM_DAYS(Y,M) (daytab[leap_year(Y)][M])
 #define DAYOFWEEK(Y,M,D) (weeknames[day_of_week(Y,M,D)])
 #define DAYOFMONTH(M) (monthnames[M-1])
 

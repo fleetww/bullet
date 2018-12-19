@@ -234,19 +234,20 @@ void month_to_day_menu() {
 
 void day_menu_draw() {
 	wclear(daywin);
+	int slcdaynum, len;
 	for (int i = 0; i < 12; i++) {
-		int slcdaynum = SELECTED_DAYNUM(i);
+		slcdaynum = SELECTED_DAYNUM(i);
 		mvwprintw(daywin, i, 0, "%d", slcdaynum);
 
-		int len = (slcdaynum > 9) ? 2 : 1;
+		len = (slcdaynum > 9) ? 2 : 1;
 		if ((monthcursor + 1) == currmonthnum && slcdaynum == currdaynum) {
 			mvwchgat(daywin, i, 0, len, A_UNDERLINE, 0, NULL);
 		}
-		if (i == daycursor) {
-			mvwchgat(daywin, i, 0, len, (currmenu == Day) ?
-					A_BLINK|A_STANDOUT : A_STANDOUT, 0, NULL);
-		}
 	}
+	slcdaynum = SELECTED_DAYNUM(daycursor);
+	len = (slcdaynum > 9) ? 2 : 1;
+	int effect = (currmenu == Day) ? A_BLINK|A_STANDOUT : A_STANDOUT;
+	mvwchgat(daywin, daycursor, 0, len, effect, 0, NULL);
 	wrefresh(daywin);
 }
 
@@ -303,16 +304,13 @@ void day_to_month_menu() {
 }
 
 void time_win_draw() {
-	wclear(timewin);
-	mvwprintw(timewin, 0, 0, "Current Date:");
-
 	init_date();
 	char buffer[38];
 	strftime(buffer, 38, "%A %B %d, %Y %I:%M %p", currenttime);
 
-	wattron(timewin, A_BOLD|A_UNDERLINE);
-	mvwprintw(timewin, 1, 0, "%s", buffer);
-	wattroff(timewin, A_BOLD|A_UNDERLINE);
+	wclear(timewin);
+	mvwprintw(timewin, 0, 0, "Today's Date:\n%s", buffer);
+	mvwchgat(timewin, 1, 0, strlen(buffer), A_BOLD|A_UNDERLINE, 0, NULL);
 	wrefresh(timewin);
 }
 
@@ -321,9 +319,8 @@ void info_win_draw() {
 		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
 
 	wclear(infowin);
-	mvwprintw(infowin, 0, 0, "Selected: \n%s", currstring.c_str());
+	mvwprintw(infowin, 0, 0, "Selected Date:\n%s", currstring.c_str());
 	mvwchgat(infowin, 1, 0, currstring.size(), A_BOLD|A_UNDERLINE, 0, NULL);
-
 	wrefresh(infowin);
 }
 
@@ -598,11 +595,6 @@ void init_ncurses() {
 	taskwin = newwin(LINES-14, COLS, 13, 0);
 	cache_tasks();
 	task_menu_draw();
-
-	/*
-	mvvline(0, 15, 0, 12);
-	mvhline(12, 15, ACS_BTEE, 1);
-	*/
 
 	refresh();
 
