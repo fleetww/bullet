@@ -328,7 +328,7 @@ void task_menu_update(int input) {
 		case 4: //Ctrl-d
 			delete_task();
 			break;
-		case 14: //Crtl-n
+		case 14: //Ctrl-n
 			append_task();
 			break;
 		case 19: //Ctrl-s
@@ -379,7 +379,9 @@ void append_task() {
 		taskcursor = currtasknum;
 	}
 
+	editcursor = 0;
 	editbuffer = "";
+	task.text() = "";
 	currmenu = Edit;
 	bulletdirty = true;
 	edit_prompt_draw();
