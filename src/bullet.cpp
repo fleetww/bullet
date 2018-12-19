@@ -298,14 +298,13 @@ void info_win_draw() {
 void task_menu_draw() {
 	wclear(taskwin);
 
-	int numlines = ((LINES-16) < (tasks.size()-taskoffset)) ? LINES-16 : tasks.size()-taskoffset;
-	for (int t = taskoffset; t < numlines - taskoffset; t++) {
-		mvwprintw(taskwin, t - taskoffset, 0, "%s\n", tasks[t].text().get());
-
-		if (t == SELECTED_TASK(taskcursor)) {
-			mvwchgat(taskwin, taskcursor, 0, strlen(tasks[t].text().as_string()), A_UNDERLINE, 0, NULL);
-		}
+	int t = 0;
+	while (SELECTED_TASK(t) < tasks.size() && t < (LINES-16)) {
+		mvwprintw(taskwin, t, 0, "%s", tasks[SELECTED_TASK(t)].text().get());
+		t++;
 	}
+	int len = strlen(tasks[SELECTED_TASK(taskcursor)].text().as_string());
+	mvwchgat(taskwin, taskcursor, 0, len, A_UNDERLINE, 0, NULL);
 	wrefresh(taskwin);
 }
 
@@ -338,28 +337,31 @@ void task_menu_update(int input) {
 }
 
 void task_menu_cursor_up() {
-	if ((taskcursor + taskoffset) > 0) {
-		if (taskcursor == 0) {
-			taskoffset--;
-		} else {
-			taskcursor--;
-		}
+	if (SELECTED_TASK(taskcursor) <= 0) {
+		return;
+	} else if (taskcursor > 0) {
+		taskcursor--;
+	} else {
+		taskoffset--;
 	}
 	task_menu_draw();
 }
 
 void task_menu_cursor_down() {
-	if ((taskcursor + taskoffset) < (tasks.size()-1)) {
-		if (taskcursor >= (LINES-16)) {
-			taskoffset++;
-		} else {
-			taskcursor++;
-		}
+	if (SELECTED_TASK(taskcursor) >= tasks.size()-1) {
+		return;
+	} else if ((taskcursor+1) < (LINES-16)) {
+		taskcursor++;
+	} else {
+		taskoffset++;
 	}
 	task_menu_draw();
 }
 
 void delete_task() {
+	if (tasks.size() == 0) {
+		return;
+	}
 	daynode.remove_child(tasks[SELECTED_TASK(taskcursor)]);
 	tasks.erase(tasks.begin()+SELECTED_TASK(taskcursor));
 	task_menu_cursor_up();
@@ -371,6 +373,7 @@ void append_task() {
 	tasks.push_back(task);
 	currtasknum = tasks.size() - 1;
 
+	//scroll task menu to new task
 	if (tasks.size() > (LINES-16)) {
 		taskoffset = tasks.size() - (LINES-16);
 		taskcursor = (LINES-15);
@@ -380,7 +383,7 @@ void append_task() {
 	}
 
 	editcursor = 0;
-	editbuffer = "";
+	editbuffer.clear();
 	task.text() = "";
 	currmenu = Edit;
 	bulletdirty = true;
@@ -401,7 +404,7 @@ void edit_prompt_draw() {
 	curs_set(1);
 	wmove(taskwin, taskcursor, 0);
 	wclrtoeol(taskwin);
-	wprintw(taskwin, "%s", editbuffer.c_str());
+	mvwprintw(taskwin, taskcursor, 0, "%s", editbuffer.c_str());
 	mvwchgat(taskwin, taskcursor, 0, editbuffer.size(), A_STANDOUT, 0, NULL);
 	wmove(taskwin, taskcursor, editcursor);
 	wrefresh(taskwin);
