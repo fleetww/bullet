@@ -298,6 +298,11 @@ void info_win_draw() {
 void task_menu_draw() {
 	wclear(taskwin);
 
+	if (tasks.size() == 0) {
+		wrefresh(taskwin);
+		return;
+	}
+
 	int t = 0;
 	while (SELECTED_TASK(t) < tasks.size() && t < (LINES-16)) {
 		mvwprintw(taskwin, t, 0, "%s", tasks[SELECTED_TASK(t)].text().get());
