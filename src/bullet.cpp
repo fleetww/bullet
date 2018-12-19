@@ -129,9 +129,18 @@ int init_bullet_journal() {
 }
 
 void save_bullet_journal() {
+	if (!bulletdirty) {
+		return;
+	}
+
 	ofstream file(journalpath, ofstream::trunc);
+	if (file.fail()) {
+		cerr << "Could not open file for saving\n";
+	}
 	bulletdoc.save(file);
 	file.close();
+
+	bulletdirty = false;
 }
 
 void month_menu_draw() {
@@ -316,6 +325,15 @@ void task_menu_update(int input) {
 			if (tasks.size() > 0)
 				select_task();
 			break;
+		case 4: //Ctrl-d
+			delete_task();
+			break;
+		case 14: //Crtl-n
+			append_task();
+			break;
+		case 19: //Ctrl-s
+			save_bullet_journal();
+			break;
 	}
 }
 
@@ -339,6 +357,33 @@ void task_menu_cursor_down() {
 		}
 	}
 	task_menu_draw();
+}
+
+void delete_task() {
+	daynode.remove_child(tasks[SELECTED_TASK(taskcursor)]);
+	tasks.erase(tasks.begin()+SELECTED_TASK(taskcursor));
+	task_menu_cursor_up();
+	bulletdirty = true;
+}
+
+void append_task() {
+	xml_node task = daynode.append_child("task");
+	tasks.push_back(task);
+	currtasknum = tasks.size() - 1;
+
+	if (tasks.size() > (LINES-16)) {
+		taskoffset = tasks.size() - (LINES-16);
+		taskcursor = (LINES-15);
+	} else {
+		taskoffset = 0;
+		taskcursor = currtasknum;
+	}
+
+	editbuffer = "";
+	currmenu = Edit;
+	bulletdirty = true;
+	edit_prompt_draw();
+	makingnewtask = true;
 }
 
 void select_task() {
@@ -371,10 +416,26 @@ void edit_prompt_update(int input) {
 		case 10:
 			edit_prompt_finish();
 			break;
+		case KEY_LEFT:
+			edit_cursor_left();
+			break;
+		case KEY_RIGHT:
+			edit_cursor_right();
+			break;
+		default:
+			if (isprint(input)) {
+				edit_prompt_insert(input);
+			}
+			break;
 	}
 }
 
 void edit_prompt_cancel() {
+	if (makingnewtask) {
+		delete_task();
+		makingnewtask = false;
+	}
+	editbuffer.clear();
 	currmenu = Task;
 	curs_set(0);
 	task_menu_draw();
@@ -391,7 +452,23 @@ void edit_prompt_bs() {
 void edit_prompt_finish() {
 	bulletdirty = true;
 	tasks[currtasknum].text() = editbuffer.c_str();
+	makingnewtask = false;
 	edit_prompt_cancel();
+}
+
+void edit_cursor_left() {
+	if (editcursor > 0) editcursor--;
+	edit_prompt_draw();
+}
+
+void edit_cursor_right() {
+	if (editcursor < editbuffer.size()) editcursor++;
+	edit_prompt_draw();
+}
+
+void edit_prompt_insert(int input) {
+	editbuffer.insert(editcursor++, 1, (char)input);
+	edit_prompt_draw();
 }
 
 void cache_tasks() {
@@ -428,10 +505,7 @@ void exit_handler() {
 	delwin(monthwin);
 	delwin(daywin);
 	endwin();
-	//TODO handle saving journal back to file
-	if (bulletdirty) {
-		save_bullet_journal();
-	}
+	save_bullet_journal();
 }
 
 void init_ncurses() {

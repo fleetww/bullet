@@ -116,15 +116,21 @@ void task_menu_cursor_up();
 void task_menu_cursor_down();
 #define SELECTED_TASK(T) (T + taskoffset)
 
+void delete_task();
+void append_task();
 void select_task();
 
 int editcursor;
 static std::string editbuffer;
+bool makingnewtask = false;
 void edit_prompt_draw();
 void edit_prompt_update(int input);
 void edit_prompt_cancel();
 void edit_prompt_bs();
 void edit_prompt_finish();
+void edit_cursor_left();
+void edit_cursor_right();
+void edit_prompt_insert(int input);
 
 void select_date();
 void cache_tasks();
