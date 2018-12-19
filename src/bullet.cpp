@@ -298,18 +298,16 @@ void info_win_draw() {
 void task_menu_draw() {
 	wclear(taskwin);
 
-	if (tasks.size() == 0) {
-		wrefresh(taskwin);
-		return;
-	}
-
 	int t = 0;
 	while (SELECTED_TASK(t) < tasks.size() && t < (LINES-16)) {
 		mvwprintw(taskwin, t, 0, "%s", tasks[SELECTED_TASK(t)].text().get());
 		t++;
 	}
-	int len = strlen(tasks[SELECTED_TASK(taskcursor)].text().as_string());
-	mvwchgat(taskwin, taskcursor, 0, len, A_UNDERLINE, 0, NULL);
+
+	if (tasks.size() > 0) {
+		int len = strlen(tasks[SELECTED_TASK(taskcursor)].text().as_string());
+		mvwchgat(taskwin, taskcursor, 0, len, A_UNDERLINE, 0, NULL);
+	}
 	wrefresh(taskwin);
 }
 
@@ -381,7 +379,7 @@ void append_task() {
 	//scroll task menu to new task
 	if (tasks.size() > (LINES-16)) {
 		taskoffset = tasks.size() - (LINES-16);
-		taskcursor = (LINES-15);
+		taskcursor = (LINES-17);
 	} else {
 		taskoffset = 0;
 		taskcursor = currtasknum;
@@ -392,6 +390,7 @@ void append_task() {
 	task.text() = "";
 	currmenu = Edit;
 	bulletdirty = true;
+	task_menu_draw();
 	edit_prompt_draw();
 	makingnewtask = true;
 }
