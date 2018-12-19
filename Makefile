@@ -14,8 +14,10 @@ build/pugixml.o : $(PUGI)
 clean:
 	rm -f bullet $(OBJ)
 
-prod :
+prod:
+	g++ -c -o build/pugixml.o -std=c++11 -I./include src/pugixml.cpp &&\
+	g++ -c -o build/bullet.o -std=c++11 -I./include src/bullet.cpp &&\
 	g++ -o bullet -std=c++11 -I./include $(OBJ) -lncurses
 
-install :
-	cp -f bullet ~/scripts/bullet
+install:
+	mkdir -p ~/.bullet && cp -f bullet ~/.bullet/bullet
