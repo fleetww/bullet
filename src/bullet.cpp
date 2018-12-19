@@ -88,7 +88,7 @@ bool make_bullet_dir(const std::string& path) {
 	return !mkdir(path.c_str(), 0777);
 }
 
-bool make_bullet_journal(const std::string& path, int year) {
+bool make_bullet_journal(int year) {
 	string xmlbase = "<calendar year=\"" + to_string(year) + "\"><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month><month></month></calendar>";
 
 	xml_parse_result result = bulletdoc.load_buffer(xmlbase.c_str(), xmlbase.length());
@@ -113,13 +113,13 @@ bool make_bullet_journal(const std::string& path, int year) {
 
 int init_bullet_journal() {
 	struct passwd *pw = getpwuid(getuid());
-	bulletdirpath = ((string) pw->pw_dir) + "/.bullet";
+	bulletdirpath = ((string) pw->pw_dir) + "/.bullet/journals";
 	journalname = to_string(year) + ".xml";
 	journalpath = bulletdirpath + "/" + journalname;
 
 	//handle .bullet dir not existing, as well as year.xml not existing
 	if (!file_exists(journalpath)) {
-		cerr << "Bullet Journal (~/.bullet/" << journalname
+		cerr << "Bullet Journal (~/.bullet/journals/" << journalname
 			<< ") does not exists, creating now\n";
 		if (!file_exists(bulletdirpath)) {
 			cerr << "Bullet Journal Directory (~/.bullet) does not exist, creating now\n";
@@ -128,7 +128,7 @@ int init_bullet_journal() {
 				return 2;
 			}
 		}
-		if (!make_bullet_journal(journalpath, year)) {
+		if (!make_bullet_journal(year)) {
 			cerr << "Failed to create Bullet Journal\n";
 			return 3;
 		}
@@ -527,7 +527,6 @@ void cache_tasks() {
 }
 
 void select_date() {
-
 	currmonthnum = monthcursor + 1;
 	currdaynum = SELECTED_DAYNUM(daycursor);
 	cache_tasks();

@@ -72,7 +72,7 @@ static std::string bulletdirpath, journalname, journalpath;
 int init_bullet_journal();
 bool file_exists(const std::string& path);
 bool make_bullet_dir(const std::string& path);
-bool make_bullet_journal(const std::string& path, int year);
+bool make_bullet_journal(int year);
 void save_bullet_journal();
 
 /*
