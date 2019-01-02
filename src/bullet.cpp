@@ -233,7 +233,7 @@ void month_to_day_menu() {
 }
 
 void day_menu_draw() {
-	wclear(daywin);
+	werase(daywin);
 	int slcdaynum, len;
 	for (int i = 0; i < 12; i++) {
 		slcdaynum = SELECTED_DAYNUM(i);
@@ -308,7 +308,7 @@ void time_win_draw() {
 	char buffer[38];
 	strftime(buffer, 38, "%A %B %d, %Y %I:%M %p", currenttime);
 
-	wclear(timewin);
+	werase(timewin);
 	mvwprintw(timewin, 0, 0, "Today's Date:\n%s", buffer);
 	mvwchgat(timewin, 1, 0, strlen(buffer), A_BOLD|A_UNDERLINE, 0, NULL);
 	wrefresh(timewin);
@@ -318,14 +318,14 @@ void info_win_draw() {
 	string currstring = DAYOFWEEK(year,currmonthnum,currdaynum) + " " +
 		DAYOFMONTH(currmonthnum) + " " + to_string(currdaynum) + ", " + to_string(year);
 
-	wclear(infowin);
+	werase(infowin);
 	mvwprintw(infowin, 0, 0, "Selected Date:\n%s", currstring.c_str());
 	mvwchgat(infowin, 1, 0, currstring.size(), A_BOLD|A_UNDERLINE, 0, NULL);
 	wrefresh(infowin);
 }
 
 void task_menu_draw() {
-	wclear(taskwin);
+	werase(taskwin);
 
 	int t = 0;
 	while (SELECTED_TASK(t) < tasks.size() && t < (LINES-14)) {
