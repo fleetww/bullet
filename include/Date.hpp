@@ -50,4 +50,3 @@ char day_of_week(int y, int m, int d) {
 	}
 	return daystotal % 7;
 }
-
