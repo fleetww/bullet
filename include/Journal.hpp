@@ -2,7 +2,7 @@
 #include "pugixml.hpp"
 class Journal {
 	public:
-		Journal(int year, bool& success);
+		Journal(int nyear, bool& success);
 		~Journal();
 		void set_date(int month, int day);
 		int size() { return tasks.size();}

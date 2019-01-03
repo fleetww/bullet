@@ -4,14 +4,16 @@
 #include <pwd.h>
 #include <iostream>
 #include <fstream>
-#include "pugixml.hpp"
 #include "Journal.hpp"
 #include "Date.hpp"
+#include "pugixml.hpp"
 
 using namespace std;
 using namespace pugi;
 
-Journal::Journal(int year, bool& success) : year{year} {
+Journal::Journal(int nyear, bool& success) {
+	year = nyear;
+	dirty = false;
 	success = false;
 	struct passwd *pw = getpwuid(getuid());
 	rootdir = ((string) pw->pw_dir) + "/.bullet";
@@ -82,6 +84,9 @@ void Journal::append(const std::string& str) {
 }
 
 std::string Journal::get(int i) {
+	if (i < 0 || i >= tasks.size()) {
+		return "";
+	}
 	return string(tasks[i].text().get());
 }
 
@@ -91,7 +96,7 @@ void Journal::set(int i, const std::string& str) {
 }
 
 void Journal::remove(int i) {
-	if (tasks.empty()) {
+	if (i < 0 || i >= tasks.size()) {
 		return;
 	}
 	daynode.remove_child(tasks[i]);
