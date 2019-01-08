@@ -14,4 +14,5 @@ class	MonthMenu {
 		int nlines = 12, ncols = 9;
 		int x = 0, y = 0;
 		WINDOW *win;
+		void move_cursor(int dt);
 };

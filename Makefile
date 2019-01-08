@@ -1,3 +1,4 @@
+BULLET = include/bullet.hpp
 JOURNAL = include/Journal.hpp
 MONTHMENU = include/MonthMenu.hpp
 DATE = include/Date.hpp
@@ -7,7 +8,7 @@ BLD = build/bullet.o build/Journal.o build/MonthMenu.o build/Date.o build/pugixm
 bullet : $(BLD)
 	g++ -g -o bullet -std=c++11 -I./include $(BLD) -lncurses
 
-build/bullet.o : src/bullet.cpp $(JOURNAL) $(DATE)
+build/bullet.o : src/bullet.cpp $(BULLET) $(JOURNAL) $(DATE)
 	g++ -g -c -o build/bullet.o -std=c++11 -I./include src/bullet.cpp
 
 build/Journal.o : src/Journal.cpp $(JOURNAL) $(DATE) $(PUGI)

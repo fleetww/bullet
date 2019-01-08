@@ -25,3 +25,25 @@ void MonthMenu::draw() {
 
 	wrefresh(win);
 }
+
+void MonthMenu::update(int input) {
+	switch (input) {
+		case 'j':
+			move_cursor(1);
+			break;
+		case 'k':
+			move_cursor(-1);
+			break;
+	}
+}
+
+/*
+ *	Positive means downward
+ */
+void MonthMenu::move_cursor(int dt) {
+	int newcursor = cursor + dt;
+
+	if (0 <= newcursor && newcursor <= 11) {
+		cursor = newcursor;
+	}
+}
