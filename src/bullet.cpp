@@ -4,6 +4,10 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+
+}
+
+int journalTest(int argc, char *argv[]) {
 	int year = 1900, month = 1, day = 1;
 	if (argc > 1) {
 		year = stoi(argv[1]);
@@ -27,7 +31,4 @@ int main(int argc, char *argv[]) {
 		cerr << "Failed to initialize Journal\n";
 		return 1;
 	}
-
-	journal.set_date(month, day);
-	cout << journal.get(0) << endl;
 }
