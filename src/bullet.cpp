@@ -1,11 +1,28 @@
+#include "Date.hpp"
 #include "Journal.hpp"
+#include "MonthMenu.hpp"
 #include <iostream>
+#include <ncurses.h>
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
+	initscr();
+	keypad(stdscr, TRUE);
+	noecho();
+	curs_set(0);
 
+	refresh();
+	MonthMenu month_menu(1);
+	month_menu.draw();
+	getch();
+
+	refresh();
+
+	endwin();
 }
+
+
 
 int journalTest(int argc, char *argv[]) {
 	int year = 1900, month = 1, day = 1;
