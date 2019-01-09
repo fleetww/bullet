@@ -11,8 +11,8 @@ class DayMenu {
 		bool active;
 	private:
 		int currnum, cursor;
-		int nlines, ncols;
-		int x, y;
+		int nlines = 12, ncols = 9;
+		int x = 10, y = 0;
 		WINDOW *win;
 		void move_cursor(int dt);
 };

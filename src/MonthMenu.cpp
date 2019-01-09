@@ -47,3 +47,11 @@ void MonthMenu::move_cursor(int dt) {
 		cursor = newcursor;
 	}
 }
+
+int MonthMenu::get_curr_num() {
+	return currnum;
+}
+
+int MonthMenu::get_cursor() {
+	return cursor;
+}

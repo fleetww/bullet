@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
 
 	MonthMenu month_menu(month);
 	month_menu.draw();
+	DayMenu day_menu(day);
+	day_menu.draw();
 
 	fd_set rfds;
 	int retval = 0;
