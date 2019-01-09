@@ -2,7 +2,7 @@
 #include "Date.hpp"
 #include <ncurses.h>
 
-MonthMenu::MonthMenu(const int &currMonth) {
+MonthMenu::MonthMenu(int currMonth) {
 	win = newwin(nlines, ncols, x, y);
 	currnum = currMonth;
 	cursor = currMonth - 1;

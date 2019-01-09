@@ -2,7 +2,7 @@
 
 class	MonthMenu {
 	public:
-		MonthMenu(const int &currMonth);
+		MonthMenu(int currMonth);
 		~MonthMenu();
 		void draw();
 		void update(int input);
